@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — AgroFlow Admin</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <aside class="admin-sidebar">
+    <div class="admin-brand"><span class="dot"></span> AgroFlow Admin</div>
+    <nav class="admin-nav" id="admin-nav"></nav>
+    <div class="admin-logout"><button id="logout-btn">Log out</button></div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <h1>Dashboard</h1>
+      <div class="flex gap-16" style="align-items:center;">
+        <span class="hint" id="welcome-line"></span>
+        <div class="notif-bell" title="Live notifications on"><span>🔔</span><span class="notif-dot" id="notif-dot"></span></div>
+      </div>
+    </div>
+
+    <div class="admin-content">
+      <div class="stat-grid">
+        <div class="stat-card"><div class="label">New Orders</div><div class="value" id="stat-new-orders">0</div></div>
+        <div class="stat-card"><div class="label">Revenue (Paid)</div><div class="value" id="stat-revenue">₹0</div></div>
+        <div class="stat-card"><div class="label">Unread Leads</div><div class="value" id="stat-leads">0</div></div>
+        <div class="stat-card"><div class="label">Open Tickets</div><div class="value" id="stat-tickets">0</div></div>
+      </div>
+
+      <div class="admin-card" style="margin-bottom:24px;">
+        <div class="toolbar"><h3 style="margin:0;">Recent Orders</h3><a href="orders.html" class="btn btn-outline btn-sm">View all</a></div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Order #</th><th>Customer</th><th>Total</th><th>Payment</th><th>Status</th><th>Placed</th></tr></thead>
+            <tbody id="recent-orders-body"><tr><td colspan="6">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/cart.js"></script>
+<script src="../js/main.js"></script>
+<script src="js/admin-common.js"></script>
+<script>
+(async function(){
+  const ctx = await requireAdmin();
+  if (!ctx) return;
+  document.getElementById('welcome-line').textContent = ctx.admin.full_name ? `Hi, ${ctx.admin.full_name}` : ctx.user.email;
+  renderSidebar('dashboard');
+  initAdminLogout();
+  initAdminRealtime();
+  refreshAdminCounts();
+
+  const [{ count: newOrders }, { count: leadsCount }, { count: ticketsCount }, { data: paidOrders }] = await Promise.all([
+    supabaseClient.from('orders').select('*', { count:'exact', head:true }).eq('status','new'),
+    supabaseClient.from('leads').select('*', { count:'exact', head:true }).eq('is_read', false),
+    supabaseClient.from('support_tickets').select('*', { count:'exact', head:true }).eq('status','open'),
+    supabaseClient.from('orders').select('total').eq('payment_status','paid'),
+  ]);
+
+  document.getElementById('stat-new-orders').textContent = newOrders || 0;
+  document.getElementById('stat-leads').textContent = leadsCount || 0;
+  document.getElementById('stat-tickets').textContent = ticketsCount || 0;
+  const revenue = (paidOrders || []).reduce((s, o) => s + Number(o.total), 0);
+  document.getElementById('stat-revenue').textContent = '₹' + revenue.toLocaleString('en-IN');
+
+  const { data: recent } = await supabaseClient.from('orders').select('*').order('created_at', { ascending:false }).limit(8);
+  document.getElementById('recent-orders-body').innerHTML = (recent && recent.length)
+    ? recent.map(o => `
+      <tr>
+        <td><b>${o.order_number}</b></td>
+        <td>${o.customer_name}<br><span class="hint">${o.customer_phone}</span></td>
+        <td>₹${Number(o.total).toLocaleString('en-IN')}</td>
+        <td><span class="badge ${o.payment_status}">${o.payment_status}</span></td>
+        <td><span class="badge ${o.status}">${o.status}</span></td>
+        <td class="hint">${formatDate(o.created_at)}</td>
+      </tr>`).join('')
+    : `<tr><td colspan="6">No orders yet.</td></tr>`;
+})();
+</script>
+</body>
+</html>

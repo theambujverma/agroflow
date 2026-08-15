@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact Us — AgroFlow</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .contact-layout{ display:grid; grid-template-columns:1fr 1fr; gap:50px; align-items:start; }
+  .contact-info-card{ background:var(--green); color:var(--cream); border-radius:var(--radius-lg); padding:40px; }
+  .contact-info-card h3{ color:var(--cream); }
+  .contact-row{ display:flex; align-items:center; gap:14px; margin-top:22px; }
+  .contact-row .ic{ width:42px; height:42px; border-radius:50%; background:rgba(250,246,236,.14); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  @media (max-width:900px){ .contact-layout{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="brand-mark"><span class="dot"></span> AgroFlow</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="products.html">Shop</a></li>
+      <li><a href="index.html#story">Our Story</a></li>
+      <li><a href="contact.html" class="active">Contact</a></li>
+      <li><a href="support.html">Help &amp; Support</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="cart.html" class="icon-btn" aria-label="Cart"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6" stroke="currentColor" stroke-width="1.7"/></svg><span class="cart-count">0</span></a>
+      <button class="nav-toggle" aria-label="Menu" onclick="document.querySelector('.nav-links').classList.toggle('open')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+    </div>
+  </div>
+</nav>
+
+<header class="page-header">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / Contact</div>
+    <h1 style="font-size:2.2rem;">Get in Touch</h1>
+    <p>Questions about an order, bulk purchase, or our brands? We usually reply within a few hours.</p>
+  </div>
+</header>
+
+<section class="section tight">
+  <div class="container">
+    <div class="contact-layout">
+      <form class="form-card" id="contact-form">
+        <h3>Send us a message</h3>
+        <div class="form-grid single" style="margin-top:18px;">
+          <div class="field"><label>Full Name *</label><input type="text" id="l-name" required></div>
+          <div class="field"><label>Phone Number *</label><input type="tel" id="l-phone" pattern="[0-9]{10}" required placeholder="10-digit mobile"></div>
+          <div class="field"><label>Email (optional)</label><input type="email" id="l-email"></div>
+          <div class="field"><label>Message *</label><textarea id="l-message" required placeholder="How can we help?"></textarea></div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:8px;" id="contact-submit">Send Message</button>
+      </form>
+
+      <div class="contact-info-card">
+        <h3>Reach us directly</h3>
+        <p style="color:rgba(250,246,236,.75)">Our team is based in Lucknow and responds fastest on WhatsApp.</p>
+        <div class="contact-row">
+          <div class="ic">📞</div>
+          <div><b>+91 99999 99999</b><div style="font-size:.82rem; color:rgba(250,246,236,.65)">Mon–Sat, 9am–7pm</div></div>
+        </div>
+        <div class="contact-row">
+          <div class="ic">✉️</div>
+          <div><b>hello@agroflow.in</b><div style="font-size:.82rem; color:rgba(250,246,236,.65)">We reply within 24 hours</div></div>
+        </div>
+        <div class="contact-row">
+          <div class="ic">📍</div>
+          <div><b>Lucknow, Uttar Pradesh</b><div style="font-size:.82rem; color:rgba(250,246,236,.65)">India</div></div>
+        </div>
+        <a href="https://wa.me/919999999999" target="_blank" class="btn btn-outline-light btn-block" style="margin-top:28px;">Chat on WhatsApp</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer"><div class="container"><div class="footer-bottom"><span>© 2026 AgroFlow. All rights reserved.</span></div></div></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/main.js"></script>
+<script src="js/contact.js"></script>
+</body>
+</html>

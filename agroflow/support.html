@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Help &amp; Support — AgroFlow</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .faq{ border:1px solid var(--line); border-radius:var(--radius-md); margin-bottom:12px; overflow:hidden; background:var(--white); }
+  .faq-q{ padding:18px 22px; font-weight:700; display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+  .faq-a{ max-height:0; overflow:hidden; transition:max-height .3s ease; padding:0 22px; }
+  .faq.open .faq-a{ max-height:200px; padding-bottom:18px; }
+  .faq.open .faq-q .chev{ transform:rotate(180deg); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="brand-mark"><span class="dot"></span> AgroFlow</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="products.html">Shop</a></li>
+      <li><a href="index.html#story">Our Story</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li><a href="support.html" class="active">Help &amp; Support</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="cart.html" class="icon-btn" aria-label="Cart"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6" stroke="currentColor" stroke-width="1.7"/></svg><span class="cart-count">0</span></a>
+      <button class="nav-toggle" aria-label="Menu" onclick="document.querySelector('.nav-links').classList.toggle('open')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+    </div>
+  </div>
+</nav>
+
+<header class="page-header">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / Help &amp; Support</div>
+    <h1 style="font-size:2.2rem;">Help &amp; Support</h1>
+    <p>Track an order, ask about returns, or raise a support ticket — our team picks these up daily.</p>
+  </div>
+</header>
+
+<section class="section tight">
+  <div class="container">
+    <div class="split">
+      <div>
+        <h3>Frequently asked</h3>
+        <div style="margin-top:20px;">
+          <div class="faq">
+            <div class="faq-q">How long does delivery take? <span class="chev">⌄</span></div>
+            <div class="faq-a"><p>Most orders are delivered within 3–6 business days depending on your pincode.</p></div>
+          </div>
+          <div class="faq">
+            <div class="faq-q">Can I pay cash on delivery? <span class="chev">⌄</span></div>
+            <div class="faq-a"><p>Yes — choose "Cash on Delivery" at checkout. Online payment via Razorpay is also available.</p></div>
+          </div>
+          <div class="faq">
+            <div class="faq-q">What is your return policy? <span class="chev">⌄</span></div>
+            <div class="faq-a"><p>If a bottle arrives damaged or leaking, raise a ticket below within 48 hours with your order number and we'll replace it free of cost.</p></div>
+          </div>
+          <div class="faq">
+            <div class="faq-q">Is the oil 100% pure? <span class="chev">⌄</span></div>
+            <div class="faq-a"><p>Yes, all AgroFlow oils are unrefined, unblended and cold-pressed with no additives.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <form class="form-card" id="support-form">
+        <h3>Raise a support ticket</h3>
+        <div class="form-grid single" style="margin-top:18px;">
+          <div class="field"><label>Full Name *</label><input type="text" id="s-name" required></div>
+          <div class="field"><label>Phone Number *</label><input type="tel" id="s-phone" pattern="[0-9]{10}" required placeholder="10-digit mobile"></div>
+          <div class="field"><label>Email (optional)</label><input type="email" id="s-email"></div>
+          <div class="field"><label>Order Number (if applicable)</label><input type="text" id="s-order" placeholder="e.g. AF260815AB12CD"></div>
+          <div class="field"><label>Subject *</label><input type="text" id="s-subject" required placeholder="e.g. Leaking bottle"></div>
+          <div class="field"><label>Message *</label><textarea id="s-message" required placeholder="Describe your issue"></textarea></div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:8px;" id="support-submit">Submit Ticket</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<footer class="footer"><div class="container"><div class="footer-bottom"><span>© 2026 AgroFlow. All rights reserved.</span></div></div></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/main.js"></script>
+<script src="js/support.js"></script>
+<script>
+document.querySelectorAll('.faq-q').forEach(q => {
+  q.addEventListener('click', () => q.closest('.faq').classList.toggle('open'));
+});
+</script>
+</body>
+</html>

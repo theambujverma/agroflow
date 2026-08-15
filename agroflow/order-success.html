@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Confirmed — AgroFlow</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="brand-mark"><span class="dot"></span> AgroFlow</a>
+    <ul class="nav-links"><li><a href="products.html">Continue Shopping</a></li></ul>
+  </div>
+</nav>
+
+<section class="section" style="min-height:60vh; display:flex; align-items:center;">
+  <div class="container text-center">
+    <div style="width:80px;height:80px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#FAF6EC" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <h1>Order placed successfully!</h1>
+    <p id="order-number-line" style="font-size:1.1rem;">Thank you for your order.</p>
+    <p>We've sent the details to our team — you'll get a call/WhatsApp update on shipping soon.</p>
+    <div style="display:flex; gap:14px; justify-content:center; margin-top:24px; flex-wrap:wrap;">
+      <a href="products.html" class="btn btn-primary">Continue Shopping</a>
+      <a href="support.html" class="btn btn-outline">Need help with this order?</a>
+    </div>
+  </div>
+</section>
+
+<footer class="footer"><div class="container"><div class="footer-bottom"><span>© 2026 AgroFlow. All rights reserved.</span></div></div></footer>
+<script>
+  const orderNum = new URLSearchParams(location.search).get('order');
+  if (orderNum){
+    document.getElementById('order-number-line').innerHTML = `Your order number is <b>${orderNum}</b>.`;
+  }
+</script>
+</body>
+</html>

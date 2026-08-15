@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Cart — AgroFlow</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .cart-layout{ display:grid; grid-template-columns:1.7fr 1fr; gap:40px; align-items:start; }
+  .cart-item{ display:grid; grid-template-columns:84px 1fr auto auto; gap:18px; align-items:center; padding:20px 0; border-bottom:1px solid var(--line); }
+  .cart-item img{ width:84px; height:84px; object-fit:contain; background:var(--cream-2); border-radius:var(--radius-sm); padding:8px; }
+  .cart-item-name{ font-family:var(--font-display); font-weight:600; font-size:1.02rem; }
+  .cart-item-meta{ font-size:.8rem; color:var(--ink-soft); }
+  .cart-qty{ display:flex; align-items:center; border:1px solid var(--line); border-radius:100px; }
+  .cart-qty button{ width:32px; height:32px; background:none; border:none; }
+  .cart-qty span{ width:28px; text-align:center; font-weight:700; }
+  .remove-link{ font-size:.78rem; color:var(--rust); font-weight:700; margin-top:4px; display:inline-block; }
+  .summary-card{ background:var(--white); border:1px solid var(--line); border-radius:var(--radius-lg); padding:28px; position:sticky; top:100px; }
+  .summary-row{ display:flex; justify-content:space-between; margin-bottom:12px; font-size:.92rem; color:var(--ink-soft); }
+  .summary-row.total{ font-weight:800; color:var(--ink); font-size:1.15rem; border-top:1px solid var(--line); padding-top:14px; margin-top:14px; }
+  @media (max-width:900px){ .cart-layout{ grid-template-columns:1fr; } .cart-item{ grid-template-columns:60px 1fr; } .cart-item > .cart-qty, .cart-item > .cart-item-price{ grid-column:2; } }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="brand-mark"><span class="dot"></span> AgroFlow</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="products.html">Shop</a></li>
+      <li><a href="index.html#story">Our Story</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li><a href="support.html">Help &amp; Support</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="cart.html" class="icon-btn" aria-label="Cart">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.5" cy="21" r="1.4" fill="currentColor"/><circle cx="17.5" cy="21" r="1.4" fill="currentColor"/></svg>
+        <span class="cart-count">0</span>
+      </a>
+      <button class="nav-toggle" aria-label="Menu" onclick="document.querySelector('.nav-links').classList.toggle('open')">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<header class="page-header">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / Cart</div>
+    <h1 style="font-size:2.2rem;">Your Cart</h1>
+  </div>
+</header>
+
+<section class="section tight">
+  <div class="container">
+    <div class="cart-layout">
+      <div id="cart-items"></div>
+      <div class="summary-card">
+        <h3>Order Summary</h3>
+        <div class="summary-row"><span>Subtotal</span><span id="sum-subtotal">₹0</span></div>
+        <div class="summary-row"><span>Shipping</span><span id="sum-shipping">₹0</span></div>
+        <div class="summary-row total"><span>Total</span><span id="sum-total">₹0</span></div>
+        <p class="hint" id="free-ship-hint" style="margin-bottom:18px;"></p>
+        <a href="checkout.html" class="btn btn-primary btn-block" id="checkout-btn">Proceed to Checkout</a>
+        <a href="products.html" class="btn btn-outline btn-block" style="margin-top:10px;">Continue Shopping</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-bottom"><span>© 2026 AgroFlow. All rights reserved.</span></div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/products.js"></script>
+<script src="js/main.js"></script>
+<script>
+function renderCart(){
+  const cart = getCart();
+  const wrap = document.getElementById('cart-items');
+  const checkoutBtn = document.getElementById('checkout-btn');
+
+  if (!cart.length){
+    wrap.innerHTML = `<div class="empty-state">
+      <svg width="52" height="52" viewBox="0 0 24 24" fill="none"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6" stroke="currentColor" stroke-width="1.4"/></svg>
+      <h3>Your cart is empty</h3>
+      <p>Add some farm-fresh oils to get started.</p>
+      <a href="products.html" class="btn btn-primary">Shop Now</a>
+    </div>`;
+    checkoutBtn.classList.add('disabled');
+  } else {
+    wrap.innerHTML = cart.map(item => `
+      <div class="cart-item">
+        <img src="${item.image_url || FALLBACK_IMG}" alt="${item.name}">
+        <div>
+          <div class="cart-item-name">${item.name}</div>
+          <div class="cart-item-meta">${item.brand} &middot; ${item.size_ml} ml</div>
+          <span class="remove-link" onclick="removeFromCart('${item.id}'); renderCart();">Remove</span>
+        </div>
+        <div class="cart-qty">
+          <button onclick="updateQty('${item.id}', ${item.qty - 1}); renderCart();">−</button>
+          <span>${item.qty}</span>
+          <button onclick="updateQty('${item.id}', ${item.qty + 1}); renderCart();">+</button>
+        </div>
+        <div class="cart-item-price"><b>${formatINR(item.price * item.qty)}</b></div>
+      </div>
+    `).join('');
+    checkoutBtn.classList.remove('disabled');
+  }
+
+  const sub = cartSubtotal();
+  const ship = cartShipping();
+  document.getElementById('sum-subtotal').textContent = formatINR(sub);
+  document.getElementById('sum-shipping').textContent = ship === 0 ? 'FREE' : formatINR(ship);
+  document.getElementById('sum-total').textContent = formatINR(sub + ship);
+  document.getElementById('free-ship-hint').textContent = sub > 0 && sub < FREE_SHIPPING_ABOVE
+    ? `Add ${formatINR(FREE_SHIPPING_ABOVE - sub)} more for free shipping!` : '';
+}
+
+renderCart();
+</script>
+</body>
+</html>

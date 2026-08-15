@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login — AgroFlow</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+<div class="login-shell">
+  <div class="login-card">
+    <div class="brand-mark" style="margin-bottom:6px;"><span class="dot"></span> AgroFlow</div>
+    <p class="hint" style="margin-bottom:26px;">Admin panel — authorised access only</p>
+    <form id="login-form">
+      <div class="field" style="margin-bottom:16px;">
+        <label>Email</label>
+        <input type="email" id="login-email" required>
+      </div>
+      <div class="field" style="margin-bottom:22px;">
+        <label>Password</label>
+        <input type="password" id="login-password" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block" id="login-btn">Sign In</button>
+      <p class="hint" id="login-error" style="color:var(--rust); margin-top:14px; display:none;"></p>
+    </form>
+    <p class="hint" style="margin-top:22px;">First time? Create your account, then ask a super-admin to run the SQL in schema.sql to add you to <code>admin_users</code>.</p>
+    <a href="#" id="show-signup" class="hint" style="text-decoration:underline;">Create an account instead</a>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../js/supabase-client.js"></script>
+<script>
+const form = document.getElementById('login-form');
+const errorEl = document.getElementById('login-error');
+let isSignup = false;
+
+document.getElementById('show-signup').addEventListener('click', (e) => {
+  e.preventDefault();
+  isSignup = !isSignup;
+  document.getElementById('login-btn').textContent = isSignup ? 'Create Account' : 'Sign In';
+  e.target.textContent = isSignup ? 'Already have an account? Sign in' : 'Create an account instead';
+});
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  errorEl.style.display = 'none';
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true;
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+
+  let result;
+  if (isSignup){
+    result = await supabaseClient.auth.signUp({ email, password });
+  } else {
+    result = await supabaseClient.auth.signInWithPassword({ email, password });
+  }
+
+  btn.disabled = false;
+
+  if (result.error){
+    errorEl.textContent = result.error.message;
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  if (isSignup){
+    errorEl.style.color = 'var(--green)';
+    errorEl.textContent = 'Account created! Ask a super-admin to add your user id to admin_users, then sign in.';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  location.href = 'dashboard.html';
+});
+
+// If already logged in and is an admin, skip straight to dashboard
+(async () => {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (session){
+    const { data } = await supabaseClient.from('admin_users').select('id').eq('id', session.user.id).maybeSingle();
+    if (data) location.href = 'dashboard.html';
+  }
+})();
+</script>
+</body>
+</html>

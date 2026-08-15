@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shop All Oils — AgroFlow</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="brand-mark"><span class="dot"></span> AgroFlow</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="products.html" class="active">Shop</a></li>
+      <li><a href="index.html#story">Our Story</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li><a href="support.html">Help &amp; Support</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="cart.html" class="icon-btn" aria-label="Cart">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.5" cy="21" r="1.4" fill="currentColor"/><circle cx="17.5" cy="21" r="1.4" fill="currentColor"/></svg>
+        <span class="cart-count">0</span>
+      </a>
+      <button class="nav-toggle" aria-label="Menu" onclick="document.querySelector('.nav-links').classList.toggle('open')">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<header class="page-header">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / Shop</div>
+    <h1 style="font-size:2.4rem;">All Oils</h1>
+    <p style="max-width:520px;">Cold-pressed mustard &amp; coconut oil from five farm-direct brands.</p>
+  </div>
+</header>
+
+<section class="section tight">
+  <div class="container">
+    <div class="filters-bar">
+      <div class="chip-group" id="category-chips">
+        <button class="chip active" data-cat="all">All</button>
+        <button class="chip" data-cat="mustard-oil">Mustard Oil</button>
+        <button class="chip" data-cat="coconut-oil">Coconut Oil</button>
+      </div>
+      <div class="chip-group" id="brand-chips"></div>
+    </div>
+    <div class="products-grid" id="all-products-grid"></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div><div class="footer-brand">AgroFlow</div><p>Farm-direct, kolhu cold-pressed mustard &amp; coconut oil.</p></div>
+      <div><h4>Shop</h4><a href="products.html">All products</a><a href="products.html?category=mustard-oil">Mustard oil</a><a href="products.html?category=coconut-oil">Coconut oil</a></div>
+      <div><h4>Company</h4><a href="index.html#story">Our story</a><a href="contact.html">Contact us</a><a href="support.html">Help &amp; support</a></div>
+      <div><h4>Get in touch</h4><a href="tel:+919999999999">+91 99999 99999</a><a href="mailto:hello@agroflow.in">hello@agroflow.in</a></div>
+    </div>
+    <div class="footer-bottom"><span>© 2026 AgroFlow. All rights reserved.</span></div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/products.js"></script>
+<script src="js/main.js"></script>
+<script>
+let currentCategory = new URLSearchParams(location.search).get('category') || 'all';
+let currentBrand = 'all';
+
+async function renderProducts(){
+  const grid = document.getElementById('all-products-grid');
+  grid.innerHTML = skeletonCardsHTML(8);
+  let products = await fetchProducts({ category: currentCategory });
+  if (currentBrand !== 'all') products = products.filter(p => p.brands && p.brands.slug === currentBrand);
+  grid.innerHTML = products.length ? products.map(productCardHTML).join('')
+    : `<div class="empty-state" style="grid-column:1/-1">No products found in this filter.</div>`;
+  initReveal();
+}
+
+async function renderBrandChips(){
+  const brands = await fetchBrands();
+  const wrap = document.getElementById('brand-chips');
+  wrap.innerHTML = `<button class="chip active" data-brand="all">All Brands</button>` +
+    brands.map(b => `<button class="chip" data-brand="${b.slug}">${b.name}</button>`).join('');
+  wrap.addEventListener('click', (e) => {
+    const btn = e.target.closest('.chip');
+    if (!btn) return;
+    wrap.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    currentBrand = btn.dataset.brand;
+    renderProducts();
+  });
+}
+
+document.getElementById('category-chips').addEventListener('click', (e) => {
+  const btn = e.target.closest('.chip');
+  if (!btn) return;
+  document.querySelectorAll('#category-chips .chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  currentCategory = btn.dataset.cat;
+  renderProducts();
+});
+
+// pre-select category chip from URL
+document.querySelectorAll('#category-chips .chip').forEach(c => {
+  c.classList.toggle('active', c.dataset.cat === currentCategory);
+});
+
+renderBrandChips();
+renderProducts();
+</script>
+</body>
+</html>

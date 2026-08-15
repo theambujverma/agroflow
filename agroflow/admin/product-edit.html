@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add / Edit Product — AgroFlow Admin</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <aside class="admin-sidebar">
+    <div class="admin-brand"><span class="dot"></span> AgroFlow Admin</div>
+    <nav class="admin-nav" id="admin-nav"></nav>
+    <div class="admin-logout"><button id="logout-btn">Log out</button></div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <h1 id="page-heading">Add Product</h1>
+      <a href="products.html" class="btn btn-outline btn-sm">← Back to products</a>
+    </div>
+
+    <div class="admin-content">
+      <form class="admin-card" id="product-form" style="max-width:820px;">
+        <div class="form-grid">
+          <div class="field full"><label>Product Name *</label><input type="text" id="p-name" required></div>
+          <div class="field"><label>Brand *</label><select id="p-brand" required></select></div>
+          <div class="field"><label>Category *</label>
+            <select id="p-category" required>
+              <option value="mustard-oil">Mustard Oil</option>
+              <option value="coconut-oil">Coconut Oil</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="field"><label>Size (ml) *</label><input type="number" id="p-size" required value="1000"></div>
+          <div class="field"><label>Extraction Method</label><input type="text" id="p-extraction" value="Kolhu / Wood cold-pressed"></div>
+          <div class="field"><label>Price (₹) *</label><input type="number" step="0.01" id="p-price" required></div>
+          <div class="field"><label>Compare-at Price (₹)</label><input type="number" step="0.01" id="p-compare"></div>
+          <div class="field"><label>Stock Quantity *</label><input type="number" id="p-stock" required value="0"></div>
+          <div class="field"><label>Image URL</label><input type="url" id="p-image" placeholder="https://…"></div>
+          <div class="field full"><label>Short Description</label><input type="text" id="p-short-desc"></div>
+          <div class="field full"><label>Full Description</label><textarea id="p-desc" style="min-height:140px;"></textarea></div>
+          <div class="field"><label>Available on site?</label>
+            <select id="p-available"><option value="true">Yes</option><option value="false">No</option></select>
+          </div>
+          <div class="field"><label>Featured on homepage?</label>
+            <select id="p-featured"><option value="false">No</option><option value="true">Yes</option></select>
+          </div>
+        </div>
+        <div class="flex gap-16" style="margin-top:26px;">
+          <button type="submit" class="btn btn-primary" id="save-btn">Save Product</button>
+          <a href="products.html" class="btn btn-outline">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/cart.js"></script>
+<script src="../js/main.js"></script>
+<script src="js/admin-common.js"></script>
+<script>
+function slugify(str){
+  return str.toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') + '-' + Date.now().toString(36).slice(-4);
+}
+
+let editingId = null;
+
+async function loadBrandOptions(selectedId){
+  const { data } = await supabaseClient.from('brands').select('*').order('name');
+  const sel = document.getElementById('p-brand');
+  sel.innerHTML = (data || []).map(b => `<option value="${b.id}" ${b.id === selectedId ? 'selected':''}>${b.name}</option>`).join('');
+}
+
+async function loadForEdit(id){
+  const { data: p, error } = await supabaseClient.from('products').select('*').eq('id', id).single();
+  if (error || !p) return;
+  document.getElementById('page-heading').textContent = 'Edit Product';
+  document.getElementById('p-name').value = p.name;
+  document.getElementById('p-category').value = p.category;
+  document.getElementById('p-size').value = p.size_ml;
+  document.getElementById('p-extraction').value = p.extraction_method || '';
+  document.getElementById('p-price').value = p.price;
+  document.getElementById('p-compare').value = p.compare_at_price || '';
+  document.getElementById('p-stock').value = p.stock_qty;
+  document.getElementById('p-image').value = p.image_url || '';
+  document.getElementById('p-short-desc').value = p.short_description || '';
+  document.getElementById('p-desc').value = p.description || '';
+  document.getElementById('p-available').value = String(p.is_available);
+  document.getElementById('p-featured').value = String(p.is_featured);
+  await loadBrandOptions(p.brand_id);
+}
+
+document.getElementById('product-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  const name = document.getElementById('p-name').value.trim();
+  const payload = {
+    name,
+    brand_id: document.getElementById('p-brand').value,
+    category: document.getElementById('p-category').value,
+    size_ml: Number(document.getElementById('p-size').value),
+    extraction_method: document.getElementById('p-extraction').value.trim(),
+    price: Number(document.getElementById('p-price').value),
+    compare_at_price: document.getElementById('p-compare').value ? Number(document.getElementById('p-compare').value) : null,
+    stock_qty: Number(document.getElementById('p-stock').value),
+    image_url: document.getElementById('p-image').value.trim(),
+    short_description: document.getElementById('p-short-desc').value.trim(),
+    description: document.getElementById('p-desc').value.trim(),
+    is_available: document.getElementById('p-available').value === 'true',
+    is_featured: document.getElementById('p-featured').value === 'true',
+  };
+
+  let error;
+  if (editingId){
+    ({ error } = await supabaseClient.from('products').update(payload).eq('id', editingId));
+  } else {
+    payload.slug = slugify(name);
+    ({ error } = await supabaseClient.from('products').insert(payload));
+  }
+
+  btn.disabled = false; btn.textContent = 'Save Product';
+
+  if (error){ console.error(error); showToast('Could not save product: ' + error.message, 'error'); return; }
+  showToast('Product saved', 'success');
+  setTimeout(() => location.href = 'products.html', 600);
+});
+
+(async function(){
+  const ctx = await requireAdmin();
+  if (!ctx) return;
+  renderSidebar('products');
+  initAdminLogout();
+  initAdminRealtime();
+  refreshAdminCounts();
+
+  editingId = new URLSearchParams(location.search).get('id');
+  if (editingId){
+    await loadForEdit(editingId);
+  } else {
+    await loadBrandOptions(null);
+  }
+})();
+</script>
+</body>
+</html>

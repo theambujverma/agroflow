@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Help & Support — AgroFlow Admin</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <aside class="admin-sidebar">
+    <div class="admin-brand"><span class="dot"></span> AgroFlow Admin</div>
+    <nav class="admin-nav" id="admin-nav"></nav>
+    <div class="admin-logout"><button id="logout-btn">Log out</button></div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <h1>Help &amp; Support Tickets</h1>
+      <div class="notif-bell"><span>🔔</span><span class="notif-dot" id="notif-dot"></span></div>
+    </div>
+
+    <div class="admin-content">
+      <div class="admin-card">
+        <div class="toolbar">
+          <input type="text" class="search-input" id="search-input" placeholder="Search tickets…">
+          <select class="status-select" id="filter-status">
+            <option value="all">All</option>
+            <option value="open">Open</option>
+            <option value="in_progress">In progress</option>
+            <option value="resolved">Resolved</option>
+          </select>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Name</th><th>Contact</th><th>Order #</th><th>Subject / Message</th><th>Status</th><th>Received</th><th></th></tr></thead>
+            <tbody id="tickets-body"><tr><td colspan="7">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/cart.js"></script>
+<script src="../js/main.js"></script>
+<script src="js/admin-common.js"></script>
+<script>
+let allTickets = [];
+
+function renderTickets(list){
+  const body = document.getElementById('tickets-body');
+  body.innerHTML = list.length ? list.map(t => `
+    <tr>
+      <td>${t.is_read ? '' : '🟢 '} ${t.name}</td>
+      <td><a href="tel:${t.phone}">${t.phone}</a></td>
+      <td>${t.order_number || '—'}</td>
+      <td style="max-width:320px;"><b>${t.subject}</b><br><span class="hint">${t.message}</span></td>
+      <td>
+        <select class="status-select" onchange="updateTicket('${t.id}', this.value)">
+          <option value="open" ${t.status==='open'?'selected':''}>Open</option>
+          <option value="in_progress" ${t.status==='in_progress'?'selected':''}>In progress</option>
+          <option value="resolved" ${t.status==='resolved'?'selected':''}>Resolved</option>
+        </select>
+      </td>
+      <td class="hint">${formatDate(t.created_at)}</td>
+      <td>
+        <div class="action-row">
+          <a class="icon-btn-sm" href="https://wa.me/91${t.phone}" target="_blank" title="WhatsApp">💬</a>
+          <button class="icon-btn-sm" onclick="deleteTicket('${t.id}')" title="Delete">🗑️</button>
+        </div>
+      </td>
+    </tr>
+  `).join('') : `<tr><td colspan="7">No tickets yet.</td></tr>`;
+}
+
+async function updateTicket(id, status){
+  await supabaseClient.from('support_tickets').update({ status, is_read:true }).eq('id', id);
+  showToast('Ticket updated', 'success');
+  loadTickets();
+  refreshAdminCounts();
+}
+async function deleteTicket(id){
+  if (!confirm('Delete this ticket?')) return;
+  await supabaseClient.from('support_tickets').delete().eq('id', id);
+  loadTickets();
+  refreshAdminCounts();
+}
+
+function applyFilters(){
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const statusFilter = document.getElementById('filter-status').value;
+  let list = allTickets;
+  if (statusFilter !== 'all') list = list.filter(t => t.status === statusFilter);
+  if (q) list = list.filter(t => t.name.toLowerCase().includes(q) || t.subject.toLowerCase().includes(q));
+  renderTickets(list);
+}
+document.getElementById('search-input').addEventListener('input', applyFilters);
+document.getElementById('filter-status').addEventListener('change', applyFilters);
+
+async function loadTickets(){
+  const { data, error } = await supabaseClient.from('support_tickets').select('*').order('created_at', { ascending:false });
+  if (error){ console.error(error); return; }
+  allTickets = data || [];
+  applyFilters();
+}
+
+(async function(){
+  const ctx = await requireAdmin();
+  if (!ctx) return;
+  renderSidebar('support');
+  initAdminLogout();
+  initAdminRealtime();
+  refreshAdminCounts();
+  loadTickets();
+
+  supabaseClient.channel('tickets-live-refresh')
+    .on('postgres_changes', { event:'INSERT', schema:'public', table:'support_tickets' }, loadTickets)
+    .subscribe();
+})();
+</script>
+</body>
+</html>

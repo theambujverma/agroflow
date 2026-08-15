@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="page-title">Product — AgroFlow</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .pd-grid{ display:grid; grid-template-columns:.95fr 1fr; gap:60px; }
+  .pd-gallery{ position:sticky; top:100px; align-self:start; }
+  .pd-main-img{ aspect-ratio:1/1; border-radius:var(--radius-lg); background:linear-gradient(160deg,#F2ECDC,#E7DCB8); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .pd-main-img img{ width:70%; }
+  .pd-brand{ color:var(--gold-2); font-weight:700; text-transform:uppercase; letter-spacing:.08em; font-size:.78rem; }
+  .pd-price-row{ display:flex; align-items:center; gap:14px; margin:16px 0; }
+  .pd-price{ font-family:var(--font-display); font-size:2rem; color:var(--green); font-weight:700; }
+  .pd-compare{ font-size:1.1rem; text-decoration:line-through; color:var(--ink-soft); opacity:.6; }
+  .pd-qty{ display:flex; align-items:center; border:1px solid var(--line); border-radius:100px; width:fit-content; }
+  .pd-qty button{ width:40px; height:40px; background:none; border:none; font-size:1.1rem; }
+  .pd-qty span{ width:36px; text-align:center; font-weight:700; }
+  .pd-actions{ display:flex; gap:14px; margin:26px 0; flex-wrap:wrap; }
+  .pd-facts{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:24px; }
+  .pd-fact{ background:var(--cream-2); border-radius:var(--radius-sm); padding:14px 16px; }
+  .pd-fact b{ display:block; font-size:.78rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); margin-bottom:4px; }
+  .pd-tabs{ display:flex; gap:26px; border-bottom:1px solid var(--line); margin:44px 0 22px; }
+  .pd-tab{ padding-bottom:14px; font-weight:700; color:var(--ink-soft); border-bottom:2px solid transparent; cursor:pointer; }
+  .pd-tab.active{ color:var(--ink); border-color:var(--gold); }
+  @media (max-width:900px){ .pd-grid{ grid-template-columns:1fr; } .pd-gallery{ position:static; } }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="brand-mark"><span class="dot"></span> AgroFlow</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="products.html" class="active">Shop</a></li>
+      <li><a href="index.html#story">Our Story</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li><a href="support.html">Help &amp; Support</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="cart.html" class="icon-btn" aria-label="Cart">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.5" cy="21" r="1.4" fill="currentColor"/><circle cx="17.5" cy="21" r="1.4" fill="currentColor"/></svg>
+        <span class="cart-count">0</span>
+      </a>
+      <button class="nav-toggle" aria-label="Menu" onclick="document.querySelector('.nav-links').classList.toggle('open')">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="container" style="padding-top:34px;">
+  <div class="breadcrumb"><a href="index.html">Home</a> / <a href="products.html">Shop</a> / <span id="crumb-name">Product</span></div>
+</div>
+
+<section class="container" style="padding:20px 28px 90px;" id="product-root">
+  <div class="empty-state">Loading product…</div>
+</section>
+
+<!-- Related products -->
+<section class="section tight" style="background:var(--cream-2)">
+  <div class="container">
+    <div class="section-head"><span class="eyebrow">You may also like</span><h2>More from AgroFlow</h2></div>
+    <div class="products-grid" id="related-grid"></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div><div class="footer-brand">AgroFlow</div><p>Farm-direct, kolhu cold-pressed mustard &amp; coconut oil.</p></div>
+      <div><h4>Shop</h4><a href="products.html">All products</a></div>
+      <div><h4>Company</h4><a href="contact.html">Contact us</a><a href="support.html">Help &amp; support</a></div>
+      <div><h4>Get in touch</h4><a href="tel:+919999999999">+91 99999 99999</a><a href="mailto:hello@agroflow.in">hello@agroflow.in</a></div>
+    </div>
+    <div class="footer-bottom"><span>© 2026 AgroFlow. All rights reserved.</span></div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/products.js"></script>
+<script src="js/main.js"></script>
+<script>
+let currentQty = 1;
+let currentProduct = null;
+
+function renderProduct(p){
+  currentProduct = p;
+  document.getElementById('page-title').textContent = `${p.name} — AgroFlow`;
+  document.getElementById('crumb-name').textContent = p.name;
+  const img = p.image_url && p.image_url.trim() ? p.image_url : FALLBACK_IMG;
+  const outOfStock = !p.is_available || p.stock_qty <= 0;
+  const brand = p.brands || {};
+
+  document.getElementById('product-root').innerHTML = `
+    <div class="pd-grid">
+      <div class="pd-gallery">
+        <div class="pd-main-img"><img src="${img}" alt="${p.name}"></div>
+      </div>
+      <div class="pd-info">
+        <span class="pd-brand">${brand.name || ''}</span>
+        <h1 style="margin-top:6px;">${p.name}</h1>
+        <p>${p.short_description || ''}</p>
+        <div class="pd-price-row">
+          <span class="pd-price">${formatINR(p.price)}</span>
+          ${p.compare_at_price ? `<span class="pd-compare">${formatINR(p.compare_at_price)}</span>` : ''}
+          ${p.compare_at_price ? `<span class="badge new">${Math.round(100-(p.price/p.compare_at_price)*100)}% OFF</span>` : ''}
+        </div>
+        <div class="flex gap-16" style="align-items:center; flex-wrap:wrap;">
+          <div class="pd-qty">
+            <button onclick="changeQty(-1)">−</button>
+            <span id="qty-val">1</span>
+            <button onclick="changeQty(1)">+</button>
+          </div>
+          <span class="hint">${outOfStock ? 'Currently out of stock' : p.stock_qty + ' in stock'}</span>
+        </div>
+        <div class="pd-actions">
+          <button class="btn btn-primary" ${outOfStock?'disabled':''} onclick="addCurrentToCart()">Add to Cart</button>
+          <button class="btn btn-gold" ${outOfStock?'disabled':''} onclick="buyNow()">Buy Now</button>
+        </div>
+        <div class="pd-facts">
+          <div class="pd-fact"><b>Size</b>${p.size_ml} ml</div>
+          <div class="pd-fact"><b>Extraction</b>${p.extraction_method || '—'}</div>
+          <div class="pd-fact"><b>Category</b>${p.category === 'mustard-oil' ? 'Mustard Oil' : 'Coconut Oil'}</div>
+          <div class="pd-fact"><b>Rating</b>★ ${p.rating} (${p.reviews_count} reviews)</div>
+        </div>
+        <div class="pd-tabs">
+          <div class="pd-tab active" data-tab="desc">Description</div>
+          <div class="pd-tab" data-tab="brand">About the Brand</div>
+        </div>
+        <div id="tab-desc"><p>${p.description || 'No description available yet.'}</p></div>
+        <div id="tab-brand" style="display:none;"><p>${brand.description || ''}</p></div>
+      </div>
+    </div>
+  `;
+
+  document.querySelectorAll('.pd-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.pd-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('tab-desc').style.display = tab.dataset.tab === 'desc' ? 'block' : 'none';
+      document.getElementById('tab-brand').style.display = tab.dataset.tab === 'brand' ? 'block' : 'none';
+    });
+  });
+}
+
+function changeQty(delta){
+  currentQty = Math.max(1, currentQty + delta);
+  document.getElementById('qty-val').textContent = currentQty;
+}
+
+function addCurrentToCart(){
+  if (!currentProduct) return;
+  const img = currentProduct.image_url && currentProduct.image_url.trim() ? currentProduct.image_url : FALLBACK_IMG;
+  addToCart({
+    id: currentProduct.id, name: currentProduct.name,
+    brand: currentProduct.brands ? currentProduct.brands.name : '',
+    price: currentProduct.price, image_url: img,
+    size_ml: currentProduct.size_ml, slug: currentProduct.slug
+  }, currentQty);
+}
+
+function buyNow(){
+  addCurrentToCart();
+  location.href = 'cart.html';
+}
+
+(async function(){
+  const slug = new URLSearchParams(location.search).get('slug');
+  if (!slug){ document.getElementById('product-root').innerHTML = `<div class="empty-state">Product not found.</div>`; return; }
+  const p = await fetchProductBySlug(slug);
+  if (!p){ document.getElementById('product-root').innerHTML = `<div class="empty-state">Product not found.</div>`; return; }
+  renderProduct(p);
+
+  const related = (await fetchProducts({ category:p.category, limit:5 })).filter(x => x.id !== p.id).slice(0,4);
+  document.getElementById('related-grid').innerHTML = related.length
+    ? related.map(productCardHTML).join('')
+    : `<p>No related products.</p>`;
+  initReveal();
+})();
+</script>
+</body>
+</html>

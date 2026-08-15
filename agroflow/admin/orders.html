@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orders — AgroFlow Admin</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="css/admin.css">
+<style>
+  .order-detail-row td{ background:var(--cream-2) !important; }
+  .items-list{ font-size:.84rem; }
+  .items-list div{ padding:3px 0; }
+</style>
+</head>
+<body>
+<div class="admin-shell">
+  <aside class="admin-sidebar">
+    <div class="admin-brand"><span class="dot"></span> AgroFlow Admin</div>
+    <nav class="admin-nav" id="admin-nav"></nav>
+    <div class="admin-logout"><button id="logout-btn">Log out</button></div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <h1>Orders</h1>
+      <div class="notif-bell"><span>🔔</span><span class="notif-dot" id="notif-dot"></span></div>
+    </div>
+
+    <div class="admin-content">
+      <div class="admin-card">
+        <div class="toolbar">
+          <input type="text" class="search-input" id="search-input" placeholder="Search by name, phone, order #…">
+          <select class="status-select" id="filter-status">
+            <option value="all">All statuses</option>
+            <option value="new">New</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="packed">Packed</option>
+            <option value="shipped">Shipped</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th></th><th>Order #</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Placed</th></tr></thead>
+            <tbody id="orders-body"><tr><td colspan="8">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/cart.js"></script>
+<script src="../js/main.js"></script>
+<script src="js/admin-common.js"></script>
+<script>
+let allOrders = [];
+const STATUS_FLOW = ['new','confirmed','packed','shipped','delivered','cancelled'];
+
+function orderRowHTML(o){
+  return `
+    <tr>
+      <td><button class="icon-btn-sm" onclick="toggleDetail('${o.id}')">👁️</button></td>
+      <td><b>${o.order_number}</b></td>
+      <td>${o.customer_name}<br><span class="hint">${o.customer_phone}</span></td>
+      <td>${o.items.length} item(s)</td>
+      <td>₹${Number(o.total).toLocaleString('en-IN')}</td>
+      <td><span class="badge ${o.payment_status}">${o.payment_method === 'cod' ? 'COD' : 'Online'} · ${o.payment_status}</span></td>
+      <td>
+        <select class="status-select" onchange="updateStatus('${o.id}', this.value)">
+          ${STATUS_FLOW.map(s => `<option value="${s}" ${o.status === s ? 'selected':''}>${s}</option>`).join('')}
+        </select>
+      </td>
+      <td class="hint">${formatDate(o.created_at)}</td>
+    </tr>
+    <tr id="detail-${o.id}" class="order-detail-row" style="display:none;">
+      <td colspan="8">
+        <div class="items-list">
+          <b>Delivery address:</b> ${o.address_line}, ${o.city}, ${o.state} - ${o.pincode}<br><br>
+          <b>Items:</b>
+          ${o.items.map(i => `<div>${i.name} × ${i.qty} — ₹${i.price * i.qty}</div>`).join('')}
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
+function renderOrders(list){
+  const body = document.getElementById('orders-body');
+  body.innerHTML = list.length ? list.map(orderRowHTML).join('') : `<tr><td colspan="8">No orders found.</td></tr>`;
+}
+
+function toggleDetail(id){
+  const row = document.getElementById(`detail-${id}`);
+  row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+}
+
+async function updateStatus(id, status){
+  await supabaseClient.from('orders').update({ status }).eq('id', id);
+  showToast('Order status updated', 'success');
+  refreshAdminCounts();
+}
+
+function applyFilters(){
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const statusFilter = document.getElementById('filter-status').value;
+  let list = allOrders;
+  if (statusFilter !== 'all') list = list.filter(o => o.status === statusFilter);
+  if (q) list = list.filter(o =>
+    o.customer_name.toLowerCase().includes(q) ||
+    o.customer_phone.includes(q) ||
+    o.order_number.toLowerCase().includes(q));
+  renderOrders(list);
+}
+
+document.getElementById('search-input').addEventListener('input', applyFilters);
+document.getElementById('filter-status').addEventListener('change', applyFilters);
+
+async function loadOrders(){
+  const { data, error } = await supabaseClient.from('orders').select('*').order('created_at', { ascending:false });
+  if (error){ console.error(error); return; }
+  allOrders = data || [];
+  applyFilters();
+}
+
+(async function(){
+  const ctx = await requireAdmin();
+  if (!ctx) return;
+  renderSidebar('orders');
+  initAdminLogout();
+  initAdminRealtime();
+  refreshAdminCounts();
+  loadOrders();
+
+  supabaseClient.channel('orders-live-refresh')
+    .on('postgres_changes', { event:'INSERT', schema:'public', table:'orders' }, loadOrders)
+    .subscribe();
+})();
+</script>
+</body>
+</html>
