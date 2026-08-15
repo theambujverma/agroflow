@@ -1,6 +1,0 @@
-[build]
-  # Publish directory for Netlify — site files live in the inner `agroflow` folder.
-  publish = "agroflow"
-
-# If you have a build step (e.g., for frameworks) set `command` accordingly.
-# command = "npm run build"
